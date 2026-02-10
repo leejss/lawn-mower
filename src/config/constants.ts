@@ -1,4 +1,3 @@
-export const DEFAULT_NEWS_URL = "https://n.news.naver.com/mnews/article/015/0005249661";
 export const MAINNEWS_URL = "https://finance.naver.com/news/mainnews.naver";
 
 export const OUTPUT_DIR = "out";

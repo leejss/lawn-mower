@@ -2,7 +2,6 @@ import {
   DEFAULT_CONCURRENCY,
   DEFAULT_MAINNEWS_LIMIT,
   DEFAULT_MAINNEWS_PAGE,
-  DEFAULT_NEWS_URL,
 } from "../config/constants";
 import type { RunOptions } from "./runOptions";
 
@@ -44,9 +43,11 @@ export const parseArgs = (argv: string[]): RunOptions => {
     };
   }
 
-  const url = getArgValue(argv, "--url") ?? DEFAULT_NEWS_URL;
-  if (url.trim().length === 0) {
-    throw new Error("`--url` 값이 비어 있습니다. 예: bun run start -- --url https://n.news.naver.com/...");
+  const url = getArgValue(argv, "--url");
+  if (!url || url.trim().length === 0) {
+    throw new Error(
+      "`--url` 은 필수입니다. 예: bun run start -- --url https://n.news.naver.com/mnews/article/015/0005249661"
+    );
   }
 
   return { mode: "single", url };

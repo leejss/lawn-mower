@@ -20,7 +20,7 @@ out/
 
 ```bash
 bun install
-bun run start
+bun run start -- --url https://n.news.naver.com/mnews/article/015/0005249661
 ```
 
 특정 URL 실행:
@@ -29,7 +29,7 @@ bun run start
 bun run start -- --url https://n.news.naver.com/mnews/article/015/0005249661
 ```
 
-- 기본 URL: `https://n.news.naver.com/mnews/article/015/0005249661`
+- 단일 모드에서 `--url`은 필수
 - 지원 URL 형식: `https://n.news.naver.com/mnews/article/{officeId}/{articleId}`
 - 브라우저 실행 옵션: `headless: false`
 
