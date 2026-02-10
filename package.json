@@ -5,9 +5,21 @@
   "scripts": {
     "start": "bun run src/index.ts",
     "scrape:single": "bun run src/index.ts --url https://n.news.naver.com/mnews/article/015/0005249661",
-    "scrape:mainnews": "bun run src/index.ts --mainnews --page 1 --limit 10 --concurrency 3"
+    "scrape:mainnews": "bun run src/index.ts --mainnews --page 1 --limit 10 --concurrency 3",
+    "pipeline:upload": "bun run src/pipeline/uploadRawNews.ts --file out/articles.json --source naver_finance_mainnews",
+    "cdk:synth": "bunx cdk synth",
+    "cdk:deploy": "bunx cdk deploy --require-approval never"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.883.0",
+    "@aws-sdk/lib-dynamodb": "^3.883.0",
+    "@aws-sdk/util-dynamodb": "^3.883.0",
     "playwright": "^1.54.2"
+  },
+  "devDependencies": {
+    "aws-cdk": "^2.1105.0",
+    "aws-cdk-lib": "^2.214.0",
+    "constructs": "^10.4.2",
+    "esbuild": "^0.25.9"
   }
 }

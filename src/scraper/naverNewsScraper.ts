@@ -4,6 +4,15 @@ import type { Article } from "../core/article";
 import type { ScrapeFailure } from "../core/failure";
 import { normalizeMultiline, normalizeSingleLine } from "../core/text";
 
+const resolveHeadlessMode = (): boolean => {
+	const raw = process.env.PLAYWRIGHT_HEADLESS;
+	if (!raw) {
+		return false;
+	}
+
+	return raw.toLowerCase() === "true" || raw === "1";
+};
+
 const getFirstText = async (
 	page: Page,
 	selectors: readonly string[],
@@ -100,7 +109,7 @@ const scrapeWithContext = async (
 };
 
 export const scrapeNaverNews = async (url: string): Promise<Article> => {
-	const browser = await chromium.launch({ headless: false });
+	const browser = await chromium.launch({ headless: resolveHeadlessMode() });
 	const context = await browser.newContext();
 
 	try {
@@ -120,7 +129,7 @@ export const scrapeNaverNewsBatch = async (
 	}
 
 	const workerCount = Math.min(concurrency, urls.length);
-	const browser = await chromium.launch({ headless: false });
+	const browser = await chromium.launch({ headless: resolveHeadlessMode() });
 	const context = await browser.newContext();
 
 	const successes: (Article | undefined)[] = new Array(urls.length).fill(
