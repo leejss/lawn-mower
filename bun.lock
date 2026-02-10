@@ -11,6 +11,7 @@
         "playwright": "^1.54.2",
       },
       "devDependencies": {
+        "@types/aws-lambda": "^8.10.155",
         "aws-cdk": "^2.1105.0",
         "aws-cdk-lib": "^2.214.0",
         "constructs": "^10.4.2",
@@ -230,6 +231,8 @@
     "@smithy/util-waiter": ["@smithy/util-waiter@4.2.8", "", { "dependencies": { "@smithy/abort-controller": "^4.2.8", "@smithy/types": "^4.12.0", "tslib": "^2.6.2" } }, "sha512-n+lahlMWk+aejGuax7DPWtqav8HYnWxQwR+LCG2BgCUmaGcTe9qZCFsmw8TMg9iG75HOwhrJCX9TCJRLH+Yzqg=="],
 
     "@smithy/uuid": ["@smithy/uuid@1.1.0", "", { "dependencies": { "tslib": "^2.6.2" } }, "sha512-4aUIteuyxtBUhVdiQqcDhKFitwfd9hqoSDYY2KRXiWtgoWJ9Bmise+KfEPDiVHWeJepvF8xJO9/9+WDIciMFFw=="],
+
+    "@types/aws-lambda": ["@types/aws-lambda@8.10.160", "", {}, "sha512-uoO4QVQNWFPJMh26pXtmtrRfGshPUSpMZGUyUQY20FhfHEElEBOPKgVmFs1z+kbpyBsRs2JnoOPT7++Z4GA9pA=="],
 
     "ajv": ["ajv@8.17.1", "", { "dependencies": { "fast-deep-equal": "^3.1.3", "fast-uri": "^3.0.1", "json-schema-traverse": "^1.0.0", "require-from-string": "^2.0.2" } }, "sha512-B/gBuNg5SiMTrPkC+A2+cW0RszwxYmn6VYxB/inlBStS5nx6xHIt/ehKRhIMhqusl7a8LjQoZnjCs5vhwxOQ1g=="],
 

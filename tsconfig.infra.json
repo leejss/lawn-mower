@@ -2,7 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "lib": ["ESNext"],
-    "types": ["node"],
+    "types": ["node", "aws-lambda"],
     "module": "ESNext",
     "moduleResolution": "bundler",
     "noEmit": true,

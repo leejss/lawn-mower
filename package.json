@@ -17,6 +17,7 @@
     "playwright": "^1.54.2"
   },
   "devDependencies": {
+    "@types/aws-lambda": "^8.10.155",
     "aws-cdk": "^2.1105.0",
     "aws-cdk-lib": "^2.214.0",
     "constructs": "^10.4.2",
