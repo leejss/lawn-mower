@@ -1,0 +1,13 @@
+{
+  "name": "naver-news-scraper",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "scrape:single": "bun run src/index.ts --url https://n.news.naver.com/mnews/article/015/0005249661",
+    "scrape:mainnews": "bun run src/index.ts --mainnews --page 1 --limit 10 --concurrency 3"
+  },
+  "dependencies": {
+    "playwright": "^1.54.2"
+  }
+}
