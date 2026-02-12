@@ -6,7 +6,7 @@ import { toNewsId } from "../core/newsId";
 import type { RawNewsRecord } from "../core/rawNewsRecord";
 
 const parseArg = (argv: string[], key: string): string | undefined => {
-  const index = argv.findIndex((arg) => arg === key);
+  const index = argv.indexOf(key);
   return index === -1 ? undefined : argv[index + 1];
 };
 
@@ -23,11 +23,7 @@ const loadArticles = async (filePath: string): Promise<Article[]> => {
   return [parsed as Article];
 };
 
-const toRawNewsRecord = (
-  article: Article,
-  source: RawNewsRecord["source"],
-  nowIso: string,
-): RawNewsRecord => ({
+const toRawNewsRecord = (article: Article, source: RawNewsRecord["source"], nowIso: string): RawNewsRecord => ({
   news_id: toNewsId(article.url),
   url: article.url,
   title: article.title,
@@ -91,9 +87,7 @@ const main = async (): Promise<void> => {
   const argv = process.argv.slice(2);
   const tableName = parseArg(argv, "--table") ?? process.env.RAW_NEWS_TABLE;
   const filePath = parseArg(argv, "--file") ?? "out/articles.json";
-  const source =
-    (parseArg(argv, "--source") as RawNewsRecord["source"] | undefined) ??
-    "naver_finance_mainnews";
+  const source = (parseArg(argv, "--source") as RawNewsRecord["source"] | undefined) ?? "naver_finance_mainnews";
 
   if (!tableName) {
     throw new Error("RAW_NEWS_TABLE 환경변수 또는 --table 인자가 필요합니다.");

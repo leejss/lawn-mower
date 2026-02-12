@@ -12,11 +12,7 @@ const runSingleMode = async (url: string): Promise<void> => {
   console.log(`\n저장 완료: ${txtPath}, ${jsonPath}`);
 };
 
-const runMainnewsMode = async (
-  page: number,
-  limit: number,
-  concurrency: number
-): Promise<void> => {
+const runMainnewsMode = async (page: number, limit: number, concurrency: number): Promise<void> => {
   const urls = await collectMainnewsArticleUrls(page, limit);
   if (urls.length === 0) {
     throw new Error("mainnews 페이지에서 기사 링크를 찾지 못했습니다.");
