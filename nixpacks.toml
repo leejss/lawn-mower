@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ['bun', 'chromium']
+
+[phases.install]
+cmds = ['bun install', 'bunx playwright install --with-deps chromium']
+
+[start]
+cmd = 'bun run server.ts'
