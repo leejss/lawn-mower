@@ -1,6 +1,0 @@
-{
-  "app": "bun run infra/bin/app.ts",
-  "context": {
-    "@aws-cdk/core:bootstrapQualifier": "hnb659fds"
-  }
-}
