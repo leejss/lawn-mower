@@ -1,106 +1,135 @@
 # Naver News Scraper (Bun + Playwright)
 
-단일 네이버 뉴스 기사 스크래핑과 `finance.naver.com` 주요뉴스 배치 스크래핑을 지원합니다.  
-추가로 CDK 기반 서버리스 파이프라인(스크래핑 -> DynamoDB 업로드 -> AI Worker 분석)까지 포함합니다.
+네이버 뉴스 기사를 자동으로 스크래핑하여 Supabase에 저장하는 시스템입니다.
+Railway에서 24/7 실행되며, 매일 자동으로 뉴스를 수집합니다.
 
-## 구조
+## 🏗️ 아키텍처
 
-```text
+```
+Railway (상시 실행)
+├── Bun Server
+├── Playwright + Chromium
+└── Cron Scheduler (매일 9시)
+     ↓
+Supabase PostgreSQL
+├── raw_news 테이블
+└── news_analysis 테이블
+```
+
+## 📁 프로젝트 구조
+
+```
 src/
-  config/constants.ts
-  core/article.ts
-  core/newsId.ts
-  core/rawNewsRecord.ts
-  core/text.ts
-  core/url.ts
-  io/output.ts
-  pipeline/uploadRawNews.ts
-  scraper/naverNewsScraper.ts
-  index.ts
-infra/
-  bin/app.ts
-  lib/news-pipeline-stack.ts
-  lambda/ai-worker.ts
-.github/workflows/
-  deploy-infra.yml
-  scrape-and-upload.yml
-out/
+  config/constants.ts          # 설정 상수
+  core/                         # 핵심 타입 정의
+    article.ts
+    newsId.ts
+    rawNewsRecord.ts
+    text.ts
+    url.ts
+  database/
+    supabase.ts                 # Supabase 클라이언트
+  scraper/
+    mainnewsCollector.ts        # 뉴스 URL 수집
+    naverNewsScraper.ts         # Playwright 스크래핑
+  services/
+    scrapeService.ts            # 스크래핑 + 업로드 로직
+  io/output.ts                  # 파일 출력
+  index.ts                      # CLI 진입점
+server.ts                       # Railway 서버 (Cron + API)
+supabase/
+  schema.sql                    # DB 스키마
 ```
 
-## 실행
+## 🚀 로컬 개발
+
+### 1. 설치
 
 ```bash
 bun install
-bun run start -- --url https://n.news.naver.com/mnews/article/015/0005249661
+bunx playwright install chromium
 ```
 
-특정 URL 실행:
+### 2. 환경 변수 설정
 
 ```bash
-bun run start -- --url https://n.news.naver.com/mnews/article/015/0005249661
+cp .env.example .env
 ```
 
-- 단일 모드에서 `--url`은 필수
-- 지원 URL 형식: `https://n.news.naver.com/mnews/article/{officeId}/{articleId}`
-- 브라우저 실행 옵션: `headless: false`
+`.env` 파일에 Supabase 정보 입력:
+```
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_KEY=your-service-role-key
+PLAYWRIGHT_HEADLESS=true
+```
 
-주요뉴스 배치 실행:
+### 3. 로컬 실행
 
+**단일 기사 스크래핑:**
 ```bash
-bun run start -- --mainnews --page 1 --limit 5 --concurrency 3
+bun run scrape:single
 ```
 
-- `--mainnews`: 주요뉴스 모드 활성화
-- `--page`: `mainnews.naver` 페이지 번호(기본 1)
-- `--limit`: 수집할 최대 기사 수(기본 10)
-- `--concurrency`: 병렬 스크래핑 동시성(기본 3)
-
-DynamoDB 업로드 실행(로컬):
-
+**주요뉴스 배치 스크래핑:**
 ```bash
-RAW_NEWS_TABLE=your-raw-news-table bun run pipeline:upload
+bun run scrape:mainnews
+# 또는 옵션 지정:
+bun run start -- --mainnews --page 1 --limit 10 --concurrency 3
 ```
 
-## 결과물
-
-- 콘솔 출력: URL, 제목, 작성일, 본문
-- 파일 저장:
-  - 단일 모드: `out/article.txt`, `out/article.json`
-  - 주요뉴스 모드: `out/articles.txt`, `out/articles.json`, `out/failures.json`
-
-## 서버리스 파이프라인 흐름
-
-1. GitHub Actions가 스케줄 실행
-2. `scrape:mainnews` 실행 후 `out/articles.json` 생성
-3. `pipeline:upload`가 DynamoDB `raw_news` 테이블에 업로드
-4. DynamoDB Streams가 AI Worker Lambda 트리거
-5. AI Worker가 분석/요약 후 `news_analysis` 테이블 저장
-
-## CDK 배포
-
-사전 준비:
-
-- AWS 계정/리전
-- GitHub OIDC용 배포 Role(`AWS_DEPLOY_ROLE_ARN`) 준비
-
-배포:
-
+**서버 실행 (Cron + API):**
 ```bash
-bun install
-bun run cdk:synth -- -c stage=dev -c githubOwner=<owner> -c githubRepo=<repo> -c githubBranch=main
-bun run cdk:deploy -- -c stage=dev -c githubOwner=<owner> -c githubRepo=<repo> -c githubBranch=main
+bun run dev
 ```
 
-## GitHub Actions Secrets
+서버가 실행되면:
+- Health check: `http://localhost:3000/health`
+- 수동 스크래핑 트리거: `http://localhost:3000/trigger-scrape`
 
-`deploy-infra.yml`:
+## 📤 배포
 
-- `AWS_DEPLOY_ROLE_ARN`
-- `AWS_ACCOUNT_ID`
-- `AWS_REGION`
+자세한 배포 가이드는 [DEPLOYMENT.md](./DEPLOYMENT.md)를 참고하세요.
 
-`scrape-and-upload.yml`:
+### 간단 요약
 
-- `AWS_GHA_ROLE_ARN`
-- `AWS_REGION`
-- `RAW_NEWS_TABLE`
+1. **Supabase 프로젝트 생성** 후 `supabase/schema.sql` 실행
+2. **Railway에서 GitHub repo 연결**
+3. **환경 변수 설정**:
+   - `SUPABASE_URL`
+   - `SUPABASE_SERVICE_KEY`
+   - `PLAYWRIGHT_HEADLESS=true`
+4. 자동 배포 완료!
+
+## ⏰ 스케줄링
+
+서버는 매일 오전 9시 (한국 시간)에 자동으로 스크래핑을 실행합니다.
+
+스케줄 변경: `server.ts`의 cron 표현식 수정
+```typescript
+cron.schedule("0 9 * * *", ...)  // 매일 9시
+cron.schedule("0 */6 * * *", ...) // 6시간마다
+```
+
+## 🔌 API 엔드포인트
+
+- `GET /health` - 헬스 체크
+- `GET /trigger-scrape` - 수동 스크래핑 트리거
+- `GET /` - 서비스 정보
+
+## 💰 비용
+
+- **Railway Hobby**: $5/월
+- **Supabase Free**: $0/월 (500MB DB)
+
+**총**: $5/월
+
+## 📝 결과물
+
+로컬 스크래핑 시 `out/` 디렉토리에 저장:
+- `articles.json` - 스크래핑한 기사 JSON
+- `articles.txt` - 텍스트 형식 기사
+- `failures.json` - 실패한 URL 목록
+
+## 🛠️ 트러블슈팅
+
+문제 발생 시 [DEPLOYMENT.md](./DEPLOYMENT.md)의 트러블슈팅 섹션을 참고하세요.
