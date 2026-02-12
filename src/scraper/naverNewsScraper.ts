@@ -7,10 +7,17 @@ import { normalizeMultiline, normalizeSingleLine } from "../core/text";
 const resolveHeadlessMode = (): boolean => {
   const raw = process.env.PLAYWRIGHT_HEADLESS;
   if (!raw) {
+    // Containers (e.g. Railway) usually don't have an X server.
+    // Default to headless unless explicitly disabled.
+    return true;
+  }
+
+  const normalized = raw.trim().toLowerCase();
+  if (normalized === "false" || normalized === "0" || normalized === "no" || normalized === "off") {
     return false;
   }
 
-  return raw.toLowerCase() === "true" || raw === "1";
+  return true;
 };
 
 const getFirstText = async (page: Page, selectors: readonly string[], multiline = false): Promise<string> => {
