@@ -1,4 +1,4 @@
-import { DEFAULT_CONCURRENCY, DEFAULT_MAINNEWS_LIMIT, DEFAULT_MAINNEWS_PAGE } from "../config/constants";
+import { config } from "../config";
 import type { RunOptions } from "./runOptions";
 
 const getArgValue = (argv: string[], key: string): string | undefined => {
@@ -23,9 +23,9 @@ export const parseArgs = (argv: string[]): RunOptions => {
   const isMainnewsMode = argv.includes("--mainnews");
 
   if (isMainnewsMode) {
-    const page = parsePositiveInt(getArgValue(argv, "--page"), "--page", DEFAULT_MAINNEWS_PAGE);
-    const limit = parsePositiveInt(getArgValue(argv, "--limit"), "--limit", DEFAULT_MAINNEWS_LIMIT);
-    const concurrency = parsePositiveInt(getArgValue(argv, "--concurrency"), "--concurrency", DEFAULT_CONCURRENCY);
+    const page = parsePositiveInt(getArgValue(argv, "--page"), "--page", 1);
+    const limit = parsePositiveInt(getArgValue(argv, "--limit"), "--limit", config.mainnewsLimit);
+    const concurrency = parsePositiveInt(getArgValue(argv, "--concurrency"), "--concurrency", config.concurrency);
 
     return {
       mode: "mainnews",

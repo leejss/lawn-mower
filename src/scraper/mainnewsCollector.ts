@@ -1,7 +1,7 @@
-import { MAINNEWS_URL } from "../config/constants";
+import { config } from "../config";
 
 const buildMainnewsUrl = (page: number): string => {
-  const url = new URL(MAINNEWS_URL);
+  const url = new URL(config.mainnewsUrl);
   url.searchParams.set("page", String(page));
   return url.toString();
 };

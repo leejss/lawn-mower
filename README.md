@@ -62,6 +62,8 @@ SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_KEY=your-service-role-key
 PLAYWRIGHT_HEADLESS=true
 SCRAPE_TRIGGER_TOKEN=replace-with-long-random-token
+ANALYSIS_TRIGGER_TOKEN=replace-with-long-random-token
+OPENAI_API_KEY=your-openai-api-key
 ```
 
 ### 3. 로컬 실행
@@ -86,10 +88,15 @@ bun run dev
 서버가 실행되면:
 - Health check: `http://localhost:3000/health`
 - 수동 스크래핑 트리거: `POST http://localhost:3000/trigger-scrape`
+- 수동 분석 트리거: `POST http://localhost:3000/trigger-analysis`
+- 분석 상태 조회: `GET http://localhost:3000/analysis/status`
 
 ```bash
 curl -X POST http://localhost:3000/trigger-scrape \
   -H "Authorization: Bearer $SCRAPE_TRIGGER_TOKEN"
+
+curl -X POST http://localhost:3000/trigger-analysis \
+  -H "Authorization: Bearer $ANALYSIS_TRIGGER_TOKEN"
 ```
 
 ## 📤 배포
@@ -105,11 +112,15 @@ curl -X POST http://localhost:3000/trigger-scrape \
    - `SUPABASE_SERVICE_KEY`
    - `PLAYWRIGHT_HEADLESS=true`
    - `SCRAPE_TRIGGER_TOKEN` (긴 랜덤 토큰)
+   - `ANALYSIS_TRIGGER_TOKEN` (긴 랜덤 토큰)
+   - `OPENAI_API_KEY`
 4. 자동 배포 완료!
 
 ## ⏰ 스케줄링
 
-서버는 매일 오전 9시 (한국 시간)에 자동으로 스크래핑을 실행합니다.
+서버는 매일 자동으로 작업을 실행합니다.
+- 오전 9시: 스크래핑
+- 오전 10시: AI 분석 + 일간 요약
 
 스케줄 변경: `server.ts`의 cron 표현식 수정
 ```typescript
@@ -121,6 +132,8 @@ cron.schedule("0 */6 * * *", ...) // 6시간마다
 
 - `GET /health` - 헬스 체크
 - `POST /trigger-scrape` - 수동 스크래핑 트리거 (Bearer 토큰 필요)
+- `POST /trigger-analysis` - 수동 분석 트리거 (Bearer 토큰 필요)
+- `GET /analysis/status` - 분석 상태/처리 현황 조회
 - `GET /` - 서비스 정보
 
 ## 💰 비용

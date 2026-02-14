@@ -1,22 +1,8 @@
 import { type BrowserContext, chromium, type Page } from "playwright";
-import { PAGE_TIMEOUT_MS, WAIT_TIMEOUT_MS } from "../config/constants";
+import { config } from "../config";
 import type { Article } from "../core/article";
 import type { ScrapeFailure } from "../core/failure";
 import { normalizeMultiline, normalizeSingleLine } from "../core/text";
-
-const resolveHeadlessMode = (): boolean => {
-  const raw = process.env.PLAYWRIGHT_HEADLESS;
-  if (!raw) {
-    return true;
-  }
-
-  const normalized = raw.trim().toLowerCase();
-  if (normalized === "false" || normalized === "0" || normalized === "no" || normalized === "off") {
-    return false;
-  }
-
-  return true;
-};
 
 const getFirstText = async (page: Page, selectors: readonly string[], multiline = false): Promise<string> => {
   for (const selector of selectors) {
@@ -84,10 +70,10 @@ const scrapeWithContext = async (context: BrowserContext, url: string): Promise<
   try {
     await page.goto(url, {
       waitUntil: "domcontentloaded",
-      timeout: PAGE_TIMEOUT_MS,
+      timeout: config.pageTimeoutMs,
     });
-    await page.waitForLoadState("networkidle", { timeout: WAIT_TIMEOUT_MS }).catch(() => undefined);
-    await page.waitForSelector("#dic_area", { timeout: WAIT_TIMEOUT_MS });
+    await page.waitForLoadState("networkidle", { timeout: config.waitTimeoutMs }).catch(() => undefined);
+    await page.waitForSelector("#dic_area", { timeout: config.waitTimeoutMs });
 
     return await scrapeFromPage(page);
   } finally {
@@ -96,7 +82,7 @@ const scrapeWithContext = async (context: BrowserContext, url: string): Promise<
 };
 
 export const scrapeNaverNews = async (url: string): Promise<Article> => {
-  const browser = await chromium.launch({ headless: resolveHeadlessMode() });
+  const browser = await chromium.launch({ headless: config.headless });
   const context = await browser.newContext();
 
   try {
@@ -116,7 +102,7 @@ export const scrapeNaverNewsBatch = async (
   }
 
   const workerCount = Math.min(concurrency, urls.length);
-  const browser = await chromium.launch({ headless: resolveHeadlessMode() });
+  const browser = await chromium.launch({ headless: config.headless });
   const context = await browser.newContext();
 
   const successes: (Article | undefined)[] = new Array(urls.length).fill(undefined);

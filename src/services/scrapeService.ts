@@ -1,3 +1,4 @@
+import { config } from "../config";
 import { saveArticlesToSupabase } from "../database/supabase";
 import { collectMainnewsArticleUrls } from "../scraper/mainnewsCollector";
 import { scrapeNaverNewsBatch } from "../scraper/naverNewsScraper";
@@ -6,7 +7,7 @@ export async function scrapeAndUpload(): Promise<void> {
   console.log("Starting scraping process...");
 
   // Collect article URLs from mainnews
-  const urls = await collectMainnewsArticleUrls(1, 10);
+  const urls = await collectMainnewsArticleUrls(1, config.mainnewsLimit);
 
   if (urls.length === 0) {
     console.log("No URLs found on mainnews page");
@@ -16,7 +17,7 @@ export async function scrapeAndUpload(): Promise<void> {
   console.log(`Found ${urls.length} URLs to scrape`);
 
   // Scrape articles
-  const { articles, failures } = await scrapeNaverNewsBatch(urls, 3);
+  const { articles, failures } = await scrapeNaverNewsBatch(urls, config.concurrency);
 
   console.log(`Scraped ${articles.length} articles successfully`);
 

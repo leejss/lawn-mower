@@ -28,6 +28,16 @@ CREATE TABLE IF NOT EXISTS news_analysis (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+CREATE INDEX IF NOT EXISTS idx_news_analysis_analyzed_at ON news_analysis(analyzed_at);
+
+-- Daily aggregated market summary from analyzed news
+CREATE TABLE IF NOT EXISTS market_daily_summary (
+  summary_date DATE PRIMARY KEY,
+  summary_result JSONB NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Updated timestamp trigger
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
@@ -43,13 +53,20 @@ CREATE TRIGGER update_raw_news_updated_at BEFORE UPDATE ON raw_news
 CREATE TRIGGER update_news_analysis_updated_at BEFORE UPDATE ON news_analysis
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_market_daily_summary_updated_at BEFORE UPDATE ON market_daily_summary
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- Enable Row Level Security (optional, for security)
 ALTER TABLE raw_news ENABLE ROW LEVEL SECURITY;
 ALTER TABLE news_analysis ENABLE ROW LEVEL SECURITY;
+ALTER TABLE market_daily_summary ENABLE ROW LEVEL SECURITY;
 
 -- Policy to allow service role to access all rows
 CREATE POLICY "Service role can access all raw_news" ON raw_news
   FOR ALL USING (true);
 
 CREATE POLICY "Service role can access all news_analysis" ON news_analysis
+  FOR ALL USING (true);
+
+CREATE POLICY "Service role can access all market_daily_summary" ON market_daily_summary
   FOR ALL USING (true);
