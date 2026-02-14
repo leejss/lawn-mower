@@ -2,6 +2,54 @@ import * as cron from "node-cron";
 import { scrapeAndUpload } from "./src/services/scrapeService";
 
 const TRIGGER_TOKEN_ENV_KEY = "SCRAPE_TRIGGER_TOKEN";
+let isScrapeRunning = false;
+let scrapeStartedAtIso: string | null = null;
+
+type ScrapeSource = "manual" | "cron";
+
+const runScrapeJob = async (source: ScrapeSource, startedAtMs: number): Promise<void> => {
+  try {
+    await scrapeAndUpload();
+    const durationMs = Date.now() - startedAtMs;
+    console.log(`[${new Date().toISOString()}] Scrape completed (source=${source}, durationMs=${durationMs})`);
+  } catch (error) {
+    const durationMs = Date.now() - startedAtMs;
+    console.error(`[${new Date().toISOString()}] Scrape failed (source=${source}, durationMs=${durationMs})`, error);
+  } finally {
+    const finishedAt = new Date().toISOString();
+    isScrapeRunning = false;
+    scrapeStartedAtIso = null;
+    console.log(`[${finishedAt}] Scrape lock released (source=${source})`);
+  }
+};
+
+const startScrapeWithLock = (
+  source: ScrapeSource,
+):
+  | { started: true }
+  | {
+      started: false;
+      reason: "already_running";
+      runningSince: string | null;
+    } => {
+  if (isScrapeRunning) {
+    return {
+      started: false,
+      reason: "already_running",
+      runningSince: scrapeStartedAtIso,
+    };
+  }
+
+  isScrapeRunning = true;
+  const startedAtMs = Date.now();
+  scrapeStartedAtIso = new Date(startedAtMs).toISOString();
+
+  console.log(`[${scrapeStartedAtIso}] Scrape lock acquired (source=${source})`);
+
+  void runScrapeJob(source, startedAtMs);
+
+  return { started: true };
+};
 
 const getBearerToken = (authorizationHeader: string | null): string | null => {
   if (!authorizationHeader) {
@@ -52,10 +100,12 @@ Bun.serve({
         return new Response("Forbidden", { status: 403 });
       }
 
-      // Manual trigger endpoint
-      scrapeAndUpload()
-        .then(() => console.log("Manual scrape triggered"))
-        .catch((error) => console.error("Manual scrape failed:", error));
+      const result = startScrapeWithLock("manual");
+      if (!result.started) {
+        console.warn(`Manual trigger rejected: scrape already running since ${result.runningSince ?? "unknown"}`);
+        return new Response("Scrape is already running", { status: 409 });
+      }
+
       return new Response("Scraping job triggered", { status: 202 });
     }
 
@@ -67,12 +117,9 @@ Bun.serve({
 cron.schedule(
   "0 9 * * *",
   async () => {
-    console.log(`[${new Date().toISOString()}] Starting scheduled scraping job`);
-    try {
-      await scrapeAndUpload();
-      console.log(`[${new Date().toISOString()}] Scheduled scraping job completed`);
-    } catch (error) {
-      console.error("Scheduled scraping job failed:", error);
+    const result = startScrapeWithLock("cron");
+    if (!result.started) {
+      console.warn(`Scheduled scrape skipped: already running since ${result.runningSince ?? "unknown"}`);
     }
   },
   {
