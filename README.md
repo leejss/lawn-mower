@@ -61,6 +61,7 @@ cp .env.example .env
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_KEY=your-service-role-key
 PLAYWRIGHT_HEADLESS=true
+SCRAPE_TRIGGER_TOKEN=replace-with-long-random-token
 ```
 
 ### 3. 로컬 실행
@@ -84,7 +85,12 @@ bun run dev
 
 서버가 실행되면:
 - Health check: `http://localhost:3000/health`
-- 수동 스크래핑 트리거: `http://localhost:3000/trigger-scrape`
+- 수동 스크래핑 트리거: `POST http://localhost:3000/trigger-scrape`
+
+```bash
+curl -X POST http://localhost:3000/trigger-scrape \
+  -H "Authorization: Bearer $SCRAPE_TRIGGER_TOKEN"
+```
 
 ## 📤 배포
 
@@ -98,6 +104,7 @@ bun run dev
    - `SUPABASE_URL`
    - `SUPABASE_SERVICE_KEY`
    - `PLAYWRIGHT_HEADLESS=true`
+   - `SCRAPE_TRIGGER_TOKEN` (긴 랜덤 토큰)
 4. 자동 배포 완료!
 
 ## ⏰ 스케줄링
@@ -113,7 +120,7 @@ cron.schedule("0 */6 * * *", ...) // 6시간마다
 ## 🔌 API 엔드포인트
 
 - `GET /health` - 헬스 체크
-- `GET /trigger-scrape` - 수동 스크래핑 트리거
+- `POST /trigger-scrape` - 수동 스크래핑 트리거 (Bearer 토큰 필요)
 - `GET /` - 서비스 정보
 
 ## 💰 비용
