@@ -36,10 +36,10 @@ export async function saveArticlesToSupabase(
 
   const records = articles.map((article) => toRawNewsRecord(article, source, nowIso));
 
-  // Upsert records (insert or update if news_id exists)
+  // Insert only semantics: when news_id already exists, keep existing row unchanged.
   const { error } = await supabase.from("raw_news").upsert(records, {
     onConflict: "news_id",
-    ignoreDuplicates: false,
+    ignoreDuplicates: true,
   });
 
   if (error) {
