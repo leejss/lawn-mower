@@ -188,3 +188,93 @@ export async function getRawNewsStatusCounts(): Promise<RawNewsStatusCountRow[]>
     }),
   );
 }
+
+export async function fetchNewsAnalysisById(newsId: string): Promise<AnalysisRow | null> {
+  const supabase = getSupabaseClient();
+
+  const { data, error } = await supabase
+    .from("news_analysis")
+    .select("news_id, analyzed_at, analysis_result")
+    .eq("news_id", newsId)
+    .single();
+
+  if (error) {
+    if (error.code === "PGRST116") {
+      return null;
+    }
+    throw new Error(`Failed to fetch news analysis: ${error.message}`);
+  }
+
+  return data as AnalysisRow;
+}
+
+export async function fetchNewsAnalysesList(
+  limit: number,
+  offset: number,
+): Promise<{ data: AnalysisRow[]; total: number }> {
+  const supabase = getSupabaseClient();
+
+  const { data, error, count } = await supabase
+    .from("news_analysis")
+    .select("news_id, analyzed_at, analysis_result", { count: "exact" })
+    .order("analyzed_at", { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  if (error) {
+    throw new Error(`Failed to fetch news analyses list: ${error.message}`);
+  }
+
+  return {
+    data: (data ?? []) as AnalysisRow[],
+    total: count ?? 0,
+  };
+}
+
+export async function fetchMarketDailySummaryByDate(summaryDate: string): Promise<{
+  summary_date: string;
+  summary_result: unknown;
+  created_at: string;
+  updated_at: string;
+} | null> {
+  const supabase = getSupabaseClient();
+
+  const { data, error } = await supabase
+    .from("market_daily_summary")
+    .select("summary_date, summary_result, created_at, updated_at")
+    .eq("summary_date", summaryDate)
+    .single();
+
+  if (error) {
+    if (error.code === "PGRST116") {
+      return null;
+    }
+    throw new Error(`Failed to fetch market daily summary: ${error.message}`);
+  }
+
+  return data;
+}
+
+export async function fetchMarketDailySummariesList(
+  limit: number,
+  offset: number,
+): Promise<{
+  data: { summary_date: string; summary_result: unknown; created_at: string; updated_at: string }[];
+  total: number;
+}> {
+  const supabase = getSupabaseClient();
+
+  const { data, error, count } = await supabase
+    .from("market_daily_summary")
+    .select("summary_date, summary_result, created_at, updated_at", { count: "exact" })
+    .order("summary_date", { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  if (error) {
+    throw new Error(`Failed to fetch market daily summaries list: ${error.message}`);
+  }
+
+  return {
+    data: data ?? [],
+    total: count ?? 0,
+  };
+}

@@ -1,4 +1,10 @@
-import { getAnalysisStatus } from "../analysis/service";
+import {
+  getAnalysisStatus,
+  getMarketDailySummariesList,
+  getMarketDailySummary,
+  getNewsAnalysesList,
+  getNewsAnalysisById,
+} from "../analysis/service";
 import { config } from "../config";
 import type { JobController } from "../scheduler/jobs";
 
@@ -114,6 +120,104 @@ export const createApiHandler =
         .catch((error) => {
           console.error("Failed to fetch analysis status", error);
           return new Response("Failed to fetch analysis status", { status: 500 });
+        });
+    }
+
+    if (url.pathname.startsWith("/api/analysis/")) {
+      if (req.method !== "GET") {
+        return new Response("Method Not Allowed", {
+          status: 405,
+          headers: { Allow: "GET" },
+        });
+      }
+
+      const newsId = url.pathname.replace("/api/analysis/", "");
+      if (!newsId) {
+        return new Response("News ID is required", { status: 400 });
+      }
+
+      return getNewsAnalysisById(newsId)
+        .then((result) => {
+          if (!result) {
+            return new Response("Analysis not found", { status: 404 });
+          }
+          return Response.json({ success: true, data: result });
+        })
+        .catch((error) => {
+          console.error("Failed to fetch news analysis", error);
+          return new Response("Failed to fetch news analysis", { status: 500 });
+        });
+    }
+
+    if (url.pathname === "/api/analysis") {
+      if (req.method !== "GET") {
+        return new Response("Method Not Allowed", {
+          status: 405,
+          headers: { Allow: "GET" },
+        });
+      }
+
+      const page = Number.parseInt(url.searchParams.get("page") ?? "1", 10);
+      const pageSize = Math.min(Number.parseInt(url.searchParams.get("pageSize") ?? "20", 10), 100);
+
+      if (page < 1 || pageSize < 1) {
+        return new Response("Invalid pagination parameters", { status: 400 });
+      }
+
+      return getNewsAnalysesList(page, pageSize)
+        .then((result) => Response.json({ success: true, ...result }))
+        .catch((error) => {
+          console.error("Failed to fetch news analyses list", error);
+          return new Response("Failed to fetch news analyses list", { status: 500 });
+        });
+    }
+
+    if (url.pathname.startsWith("/api/summary/")) {
+      if (req.method !== "GET") {
+        return new Response("Method Not Allowed", {
+          status: 405,
+          headers: { Allow: "GET" },
+        });
+      }
+
+      const summaryDate = url.pathname.replace("/api/summary/", "");
+      if (!summaryDate || !/^\d{4}-\d{2}-\d{2}$/.test(summaryDate)) {
+        return new Response("Invalid date format. Use YYYY-MM-DD", { status: 400 });
+      }
+
+      return getMarketDailySummary(summaryDate)
+        .then((result) => {
+          if (!result) {
+            return new Response("Summary not found", { status: 404 });
+          }
+          return Response.json({ success: true, data: result });
+        })
+        .catch((error) => {
+          console.error("Failed to fetch market daily summary", error);
+          return new Response("Failed to fetch market daily summary", { status: 500 });
+        });
+    }
+
+    if (url.pathname === "/api/summary") {
+      if (req.method !== "GET") {
+        return new Response("Method Not Allowed", {
+          status: 405,
+          headers: { Allow: "GET" },
+        });
+      }
+
+      const page = Number.parseInt(url.searchParams.get("page") ?? "1", 10);
+      const pageSize = Math.min(Number.parseInt(url.searchParams.get("pageSize") ?? "20", 10), 100);
+
+      if (page < 1 || pageSize < 1) {
+        return new Response("Invalid pagination parameters", { status: 400 });
+      }
+
+      return getMarketDailySummariesList(page, pageSize)
+        .then((result) => Response.json({ success: true, ...result }))
+        .catch((error) => {
+          console.error("Failed to fetch market daily summaries list", error);
+          return new Response("Failed to fetch market daily summaries list", { status: 500 });
         });
     }
 

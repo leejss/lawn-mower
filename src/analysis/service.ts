@@ -4,7 +4,11 @@ import { z } from "zod";
 import { config } from "../config";
 import type { MarketDailySummary, NewsAnalysisResult } from "../core/analysis";
 import {
+  fetchMarketDailySummariesList,
+  fetchMarketDailySummaryByDate,
   fetchNewsAnalysesByDate,
+  fetchNewsAnalysesList,
+  fetchNewsAnalysisById,
   fetchPendingRawNews,
   getRawNewsStatusCounts,
   saveMarketDailySummary,
@@ -255,4 +259,124 @@ export async function getAnalysisStatus(): Promise<{
 }> {
   const statuses = await getRawNewsStatusCounts();
   return { statuses };
+}
+
+export async function getNewsAnalysisById(newsId: string): Promise<{
+  newsId: string;
+  analyzedAt: string;
+  analysis: NewsAnalysisResult;
+} | null> {
+  const row = await fetchNewsAnalysisById(newsId);
+  if (!row) {
+    return null;
+  }
+
+  const result = analysisSchema.safeParse(row.analysis_result);
+  if (!result.success) {
+    throw new Error(`Invalid analysis data for news_id=${newsId}: ${result.error.message}`);
+  }
+
+  return {
+    newsId: row.news_id,
+    analyzedAt: row.analyzed_at,
+    analysis: result.data,
+  };
+}
+
+export async function getNewsAnalysesList(
+  page: number,
+  pageSize: number,
+): Promise<{
+  data: { newsId: string; analyzedAt: string; analysis: NewsAnalysisResult }[];
+  pagination: { page: number; pageSize: number; total: number; totalPages: number };
+}> {
+  const offset = (page - 1) * pageSize;
+  const { data: rows, total } = await fetchNewsAnalysesList(pageSize, offset);
+
+  const validAnalyses: { newsId: string; analyzedAt: string; analysis: NewsAnalysisResult }[] = [];
+
+  for (const row of rows) {
+    const result = analysisSchema.safeParse(row.analysis_result);
+    if (result.success) {
+      validAnalyses.push({
+        newsId: row.news_id,
+        analyzedAt: row.analyzed_at,
+        analysis: result.data,
+      });
+    }
+  }
+
+  return {
+    data: validAnalyses,
+    pagination: {
+      page,
+      pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize),
+    },
+  };
+}
+
+export async function getMarketDailySummary(summaryDate: string): Promise<{
+  summaryDate: string;
+  summary: MarketDailySummary;
+  createdAt: string;
+  updatedAt: string;
+} | null> {
+  const row = await fetchMarketDailySummaryByDate(summaryDate);
+  if (!row) {
+    return null;
+  }
+
+  const result = dailySummarySchema.safeParse(row.summary_result);
+  if (!result.success) {
+    throw new Error(`Invalid summary data for date=${summaryDate}: ${result.error.message}`);
+  }
+
+  return {
+    summaryDate: row.summary_date,
+    summary: result.data,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export async function getMarketDailySummariesList(
+  page: number,
+  pageSize: number,
+): Promise<{
+  data: { summaryDate: string; summary: MarketDailySummary; createdAt: string; updatedAt: string }[];
+  pagination: { page: number; pageSize: number; total: number; totalPages: number };
+}> {
+  const offset = (page - 1) * pageSize;
+  const { data: rows, total } = await fetchMarketDailySummariesList(pageSize, offset);
+
+  const validSummaries: {
+    summaryDate: string;
+    summary: MarketDailySummary;
+    createdAt: string;
+    updatedAt: string;
+  }[] = [];
+
+  for (const row of rows) {
+    const result = dailySummarySchema.safeParse(row.summary_result);
+    if (result.success) {
+      validSummaries.push({
+        summaryDate: row.summary_date,
+        summary: result.data,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      });
+    }
+  }
+
+  return {
+    data: validSummaries,
+    pagination: {
+      page,
+      pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize),
+    },
+  };
 }
