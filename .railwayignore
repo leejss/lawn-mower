@@ -1,6 +1,0 @@
-node_modules
-.git
-out
-*.log
-.env.local
-.DS_Store
