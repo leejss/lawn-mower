@@ -9,7 +9,7 @@
     "lint": "biome lint .",
     "check": "biome check .",
     "format": "biome format --write .",
-    "scrape:single": "bun run src/cli.ts --url https://n.news.naver.com/mnews/article/015/0005249661",
+    "scrape:single": "bun run src/cli.ts",
     "scrape:mainnews": "bun run src/cli.ts --mainnews --page 1 --limit 10 --concurrency 3"
   },
   "dependencies": {

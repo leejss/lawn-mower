@@ -35,44 +35,29 @@ const ensureAnalysisEnv = (): void => {
 	}
 };
 
-const searchKeywordSchema = z.object({
-	keyword: z.string().min(1),
+const analysisQuestionSchema = z.object({
+	question: z.string().min(10),
 	purpose: z.string().min(10),
-	dataSource: z.string().min(1),
 });
 
 const analysisSchema = z.object({
 	report: z.object({
 		headline: z.string().min(10).max(200),
-		analysis: z.string().min(100),
-		marketImpact: z.string().min(50),
-		watchList: z.string().min(30),
+		body: z.string().min(100),
 		outlook: z.string().min(50),
 	}),
-	metadata: z.object({
-		sentiment: z.enum(["bullish", "neutral", "bearish"]),
-		sectors: z.array(z.string().min(1)).max(5),
-		confidence: z.number().min(0).max(1),
-	}),
-	searchKeywords: z.array(searchKeywordSchema).min(2).max(5),
+	analysisQuestions: z.array(analysisQuestionSchema).min(2).max(5),
 });
 
 const dailySummarySchema = z.object({
 	summaryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 	report: z.object({
 		headline: z.string().min(10).max(200),
-		marketOverview: z.string().min(100),
-		keyDevelopments: z.string().min(100),
-		sectorAnalysis: z.string().min(100),
-		tomorrowWatch: z.string().min(50),
+		summary: z.string().min(100),
+		outlook: z.string().min(50),
 		analystNote: z.string().min(50),
 	}),
-	metadata: z.object({
-		marketRegime: z.enum(["risk_on", "neutral", "risk_off"]),
-		topSectors: z.array(z.string().min(1)).max(5),
-		confidence: z.number().min(0).max(1),
-	}),
-	searchKeywords: z.array(searchKeywordSchema).min(3).max(8),
+	analysisQuestions: z.array(analysisQuestionSchema).min(3).max(8),
 });
 
 const getKstDateString = (date: Date): string =>
@@ -96,6 +81,8 @@ const analyzeArticle = async (article: {
 			"CRITICAL: Base your analysis ONLY on the provided article content.",
 			"You may provide reasonable inferences and professional opinions based on the article.",
 			"DO NOT use external market data or information not mentioned in the article.",
+			"Write primarily in natural Korean prose like an analyst report, not as numeric summaries.",
+			"Avoid unnecessary percentages, scores, and number-heavy bullet points unless explicitly stated in the article.",
 			"Clearly distinguish between facts from the article and your analytical inferences.",
 			"If the article doesn't provide enough information, state that clearly.",
 			"Write in Korean. This is not investment advice.",
@@ -109,20 +96,16 @@ const analyzeArticle = async (article: {
 			"=== INSTRUCTIONS ===",
 			"Extract and analyze ONLY what is written in the article above.",
 			"Do NOT add information from your training data or general knowledge.",
+			"Use paragraph-style narrative suitable for an analyst note; avoid table-like or metric-dump style responses.",
+			"In report fields, prioritize qualitative interpretation over raw numbers unless the numbers are core facts in the article.",
 			"",
 			"Write an analyst report with:",
 			"- report.headline: 1-2 sentence summary capturing the key message",
-			"- report.analysis: Detailed analysis of the article's content, implications, and your professional interpretation",
-			"- report.marketImpact: Market/sector impact based on the article content and reasonable inferences",
-			"- report.watchList: Sectors or stocks to monitor based on the article (if none mentioned, provide reasoned suggestions or state 'insufficient information')",
-			"- report.outlook: Forward-looking perspective based on article content and logical inferences",
-			"- metadata.sentiment: bullish/neutral/bearish based on article tone",
-			"- metadata.sectors: Sectors explicitly mentioned in the article (max 5)",
-			"- metadata.confidence: 0-1 (how clear and specific is the article)",
-			"- searchKeywords: 2-5 keywords for verifying or expanding on claims made in the article:",
-			"  * keyword: specific term or metric mentioned in the article",
-			"  * purpose: what aspect of the article this would verify or expand",
-			"  * dataSource: where to find this data (e.g., 'KRX 거래량', 'DART 공시', '한국은행 통계', 'Google Trends')",
+			"- report.body: Coherent narrative covering the article's content, market/sector implications, and related stocks or sectors to watch. Write as connected paragraphs, not separate sections.",
+			"- report.outlook: Forward-looking perspective and key monitoring points",
+			"- analysisQuestions: 2-5 follow-up analysis questions to investigate further:",
+			"  * question: a concrete question an analyst should validate next",
+			"  * purpose: why this question matters for interpreting the article",
 		].join("\n"),
 	});
 
@@ -132,9 +115,9 @@ const analyzeArticle = async (article: {
 const summarizeDaily = async (summaryDate: string, analyses: NewsAnalysisResult[]): Promise<MarketDailySummary> => {
 	const compactPayload = analyses.map((analysis) => ({
 		headline: analysis.report.headline,
-		sentiment: analysis.metadata.sentiment,
-		sectors: analysis.metadata.sectors,
-		searchKeywords: analysis.searchKeywords.map((k) => k.keyword),
+		body: analysis.report.body,
+		outlook: analysis.report.outlook,
+		analysisQuestions: analysis.analysisQuestions.map((q) => q.question),
 	}));
 
 	const { output } = await generateText({
@@ -145,6 +128,8 @@ const summarizeDaily = async (summaryDate: string, analyses: NewsAnalysisResult[
 			"CRITICAL: Base your summary on the provided news analyses.",
 			"You may provide strategic insights and professional opinions based on the analyses.",
 			"DO NOT add external market data not present in the analyses.",
+			"Write in flowing analyst-report prose rather than number-heavy commentary.",
+			"Avoid excessive numeric detail or pseudo-quantitative statements unless supported by the provided analyses.",
 			"Synthesize the analyses and provide your professional interpretation.",
 			"Write professionally but accessibly.",
 		].join(" "),
@@ -157,18 +142,17 @@ const summarizeDaily = async (summaryDate: string, analyses: NewsAnalysisResult[
 			"=== INSTRUCTIONS ===",
 			"Synthesize ONLY the information from the analyses above.",
 			"Do NOT add market commentary from your training data.",
+			"Deliver the report sections as coherent narrative paragraphs in plain Korean.",
+			"Prefer qualitative synthesis and implications over listing numeric indicators.",
 			"",
 			"Write a daily market report with:",
 			"- report.headline: One-line summary of the day's market themes",
-			"- report.marketOverview: Overall sentiment, themes, and your strategic interpretation",
-			"- report.keyDevelopments: Major news and their significance",
-			"- report.sectorAnalysis: Sector trends and your professional assessment",
-			"- report.tomorrowWatch: What to watch based on today's developments and logical implications",
-			"- report.analystNote: Your professional insights, patterns, and strategic perspective on the analyses",
-			"- metadata.marketRegime: risk_on/neutral/risk_off based on overall sentiment in analyses",
-			"- metadata.topSectors: Top 5 sectors mentioned across analyses",
-			"- metadata.confidence: 0-1 (how consistent and clear are the analyses)",
-			"- searchKeywords: 3-8 keywords for verifying themes found in the analyses with purpose and dataSource",
+			"- report.summary: Integrated narrative covering major developments, market flow, and sector trends. Write as connected paragraphs.",
+			"- report.outlook: What to watch next and forward-looking implications",
+			"- report.analystNote: Your professional insights, patterns, and strategic perspective",
+			"- analysisQuestions: 3-8 high-value follow-up questions derived from the day's analyses",
+			"  * question: specific investigation question for next research cycle",
+			"  * purpose: why this question is strategically important",
 		].join("\n"),
 	});
 
@@ -287,18 +271,11 @@ export async function processDailySummary(targetDate = getKstDateString(new Date
 			summaryDate: targetDate,
 			report: {
 				headline: "분석 가능한 뉴스 없음",
-				marketOverview: "해당 날짜에 분석된 뉴스가 없습니다.",
-				keyDevelopments: "데이터 없음",
-				sectorAnalysis: "데이터 없음",
-				tomorrowWatch: "다음 거래일 뉴스를 확인하세요.",
+				summary: "해당 날짜에 분석된 뉴스가 없습니다.",
+				outlook: "다음 거래일 뉴스를 확인하세요.",
 				analystNote: "분석 데이터가 충분하지 않습니다.",
 			},
-			metadata: {
-				marketRegime: "neutral",
-				topSectors: [],
-				confidence: 0,
-			},
-			searchKeywords: [],
+			analysisQuestions: [],
 		});
 
 		return { summaryDate: targetDate, analyzedCount: 0 };

@@ -40,7 +40,7 @@ export const parseArgs = (argv: string[]): RunOptions => {
   const url = getArgValue(argv, "--url");
   if (!url || url.trim().length === 0) {
     throw new Error(
-      "`--url` 은 필수입니다. 예: bun run cli -- --url https://n.news.naver.com/mnews/article/015/0005249661",
+      "`--url` 은 필수입니다. 예: bun run cli -- --url https://n.news.naver.com/mnews/article/{OFFICE_ID}/{ARTICLE_ID}",
     );
   }
 
@@ -62,7 +62,7 @@ export const validateNaverNewsUrl = (rawUrl: string): string => {
 
   if (!isHttps || !isNaverNewsHost || !hasArticlePath) {
     throw new Error(
-      "현재는 네이버 뉴스 기사 URL만 지원합니다. 예: https://n.news.naver.com/mnews/article/015/0005249661",
+      "현재는 네이버 뉴스 기사 URL만 지원합니다. 예: https://n.news.naver.com/mnews/article/{OFFICE_ID}/{ARTICLE_ID}",
     );
   }
 

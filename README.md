@@ -77,7 +77,7 @@ OPENAI_API_KEY=your-openai-api-key
 
 **단일 기사 스크래핑:**
 ```bash
-bun run scrape:single
+bun run scrape:single -- --url https://n.news.naver.com/mnews/article/{OFFICE_ID}/{ARTICLE_ID}
 ```
 
 **주요뉴스 배치 스크래핑:**
