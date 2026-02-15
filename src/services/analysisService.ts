@@ -15,6 +15,12 @@ import {
 
 const KST_TIME_ZONE = "Asia/Seoul";
 
+const ensureAnalysisEnv = (): void => {
+  if (!config.openaiKey) {
+    throw new Error("OPENAI_API_KEY is required to run analysis");
+  }
+};
+
 const analysisSchema = z.object({
   sentimentLabel: z.enum(["bullish", "neutral", "bearish"]),
   sentimentScore: z.number().min(-1).max(1),
@@ -134,6 +140,8 @@ export async function runNewsAnalysisBatch(limit = config.analysisBatchSize): Pr
   succeeded: number;
   failed: number;
 }> {
+  ensureAnalysisEnv();
+
   const pendingItems = await fetchPendingRawNews(limit);
 
   let processed = 0;

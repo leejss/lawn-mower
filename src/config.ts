@@ -24,12 +24,12 @@ const configSchema = z.object({
   // 출력
   outputDir: z.string().default("out"),
 
-  // 민감 정보 (필수)
-  supabaseUrl: z.string().min(1, "SUPABASE_URL is required"),
-  supabaseKey: z.string().min(1, "SUPABASE_SERVICE_KEY is required"),
-  openaiKey: z.string().min(1, "OPENAI_API_KEY is required"),
-  scrapeToken: z.string().min(1, "SCRAPE_TRIGGER_TOKEN is required"),
-  analysisToken: z.string().min(1, "ANALYSIS_TRIGGER_TOKEN is required"),
+  // 민감 정보 (기능별 런타임에서 검증)
+  supabaseUrl: z.string().min(1).optional(),
+  supabaseKey: z.string().min(1).optional(),
+  openaiKey: z.string().min(1).optional(),
+  scrapeToken: z.string().min(1).optional(),
+  analysisToken: z.string().min(1).optional(),
 });
 
 type Config = z.infer<typeof configSchema>;

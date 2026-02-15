@@ -1,5 +1,7 @@
-import { config } from "../config";
 import type { RunOptions } from "./runOptions";
+
+const DEFAULT_MAINNEWS_LIMIT = 10;
+const DEFAULT_CONCURRENCY = 3;
 
 const getArgValue = (argv: string[], key: string): string | undefined => {
   const index = argv.indexOf(key);
@@ -24,8 +26,8 @@ export const parseArgs = (argv: string[]): RunOptions => {
 
   if (isMainnewsMode) {
     const page = parsePositiveInt(getArgValue(argv, "--page"), "--page", 1);
-    const limit = parsePositiveInt(getArgValue(argv, "--limit"), "--limit", config.mainnewsLimit);
-    const concurrency = parsePositiveInt(getArgValue(argv, "--concurrency"), "--concurrency", config.concurrency);
+    const limit = parsePositiveInt(getArgValue(argv, "--limit"), "--limit", DEFAULT_MAINNEWS_LIMIT);
+    const concurrency = parsePositiveInt(getArgValue(argv, "--concurrency"), "--concurrency", DEFAULT_CONCURRENCY);
 
     return {
       mode: "mainnews",

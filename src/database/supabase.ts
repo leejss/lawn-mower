@@ -128,14 +128,24 @@ export async function saveNewsAnalysis(newsId: string, analysisResult: unknown):
 
 export async function fetchNewsAnalysesByDate(summaryDate: string): Promise<AnalysisRow[]> {
   const supabase = getSupabaseClient();
-  const start = `${summaryDate}T00:00:00.000Z`;
-  const end = `${summaryDate}T23:59:59.999Z`;
+  const [year, month, day] = summaryDate.split("-").map(Number);
+
+  if (!year || !month || !day) {
+    throw new Error(`Invalid summaryDate format: ${summaryDate}`);
+  }
+
+  // summaryDate는 KST 기준 YYYY-MM-DD이므로, 조회 경계는 KST 하루를 UTC로 변환해 사용한다.
+  const kstOffsetHours = 9;
+  const startUtcMs = Date.UTC(year, month - 1, day, 0, 0, 0, 0) - kstOffsetHours * 60 * 60 * 1000;
+  const endExclusiveUtcMs = Date.UTC(year, month - 1, day + 1, 0, 0, 0, 0) - kstOffsetHours * 60 * 60 * 1000;
+  const start = new Date(startUtcMs).toISOString();
+  const endExclusive = new Date(endExclusiveUtcMs).toISOString();
 
   const { data, error } = await supabase
     .from("news_analysis")
     .select("news_id, analyzed_at, analysis_result")
     .gte("analyzed_at", start)
-    .lte("analyzed_at", end)
+    .lt("analyzed_at", endExclusive)
     .order("analyzed_at", { ascending: true });
 
   if (error) {
@@ -163,23 +173,20 @@ export async function saveMarketDailySummary(summaryDate: string, summaryResult:
 
 export async function getRawNewsStatusCounts(): Promise<RawNewsStatusCountRow[]> {
   const supabase = getSupabaseClient();
-  const { data: rows, error: fallbackError } = await supabase.from("raw_news").select("status");
+  const statuses: RawNewsStatus[] = ["PENDING", "PROCESSING", "DONE", "FAILED"];
 
-  if (fallbackError) {
-    throw new Error(`Failed to fetch raw_news statuses: ${fallbackError.message}`);
-  }
+  return Promise.all(
+    statuses.map(async (status) => {
+      const { count, error } = await supabase
+        .from("raw_news")
+        .select("news_id", { count: "exact", head: true })
+        .eq("status", status);
 
-  const counts = new Map<RawNewsStatus, number>([
-    ["PENDING", 0],
-    ["PROCESSING", 0],
-    ["DONE", 0],
-    ["FAILED", 0],
-  ]);
+      if (error) {
+        throw new Error(`Failed to fetch raw_news status count (${status}): ${error.message}`);
+      }
 
-  for (const row of rows ?? []) {
-    const status = row.status as RawNewsStatus;
-    counts.set(status, (counts.get(status) ?? 0) + 1);
-  }
-
-  return Array.from(counts.entries()).map(([status, count]) => ({ status, count }));
+      return { status, count: count ?? 0 };
+    }),
+  );
 }
