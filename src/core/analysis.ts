@@ -1,42 +1,41 @@
 export type SentimentLabel = "bullish" | "neutral" | "bearish";
 
-export type AnalysisKeyword = {
+export type SearchKeyword = {
   keyword: string;
-  score: number;
-  reason: string;
-};
-
-export type CapitalFlowSignal = {
-  direction: "inflow" | "outflow" | "neutral";
-  participants: ("foreign" | "institutional" | "retail")[];
-  rationale: string;
-};
-
-export type NextKeyword = {
-  keyword: string;
-  reason: string;
-  confidence: number;
-  followMetrics: string[];
+  purpose: string;
+  dataSource: string;
 };
 
 export type NewsAnalysisResult = {
-  sentimentLabel: SentimentLabel;
-  sentimentScore: number;
-  sectors: string[];
-  keywords: AnalysisKeyword[];
-  capitalFlowSignal: CapitalFlowSignal;
-  confidence: number;
-  summary: string;
-  nextKeywords: NextKeyword[];
+  report: {
+    headline: string;
+    analysis: string;
+    marketImpact: string;
+    watchList: string;
+    outlook: string;
+  };
+  metadata: {
+    sentiment: SentimentLabel;
+    sectors: string[];
+    confidence: number;
+  };
+  searchKeywords: SearchKeyword[];
 };
 
 export type MarketDailySummary = {
   summaryDate: string;
-  marketRegime: "risk_on" | "neutral" | "risk_off";
-  highlights: string[];
-  topSectors: string[];
-  topKeywords: string[];
-  nextKeywords: NextKeyword[];
-  confidence: number;
-  summary: string;
+  report: {
+    headline: string;
+    marketOverview: string;
+    keyDevelopments: string;
+    sectorAnalysis: string;
+    tomorrowWatch: string;
+    analystNote: string;
+  };
+  metadata: {
+    marketRegime: "risk_on" | "neutral" | "risk_off";
+    topSectors: string[];
+    confidence: number;
+  };
+  searchKeywords: SearchKeyword[];
 };

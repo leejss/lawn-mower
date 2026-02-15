@@ -21,62 +21,44 @@ const ensureAnalysisEnv = (): void => {
   }
 };
 
+const searchKeywordSchema = z.object({
+  keyword: z.string().min(1),
+  purpose: z.string().min(10),
+  dataSource: z.string().min(1),
+});
+
 const analysisSchema = z.object({
-  sentimentLabel: z.enum(["bullish", "neutral", "bearish"]),
-  sentimentScore: z.number().min(-1).max(1),
-  sectors: z.array(z.string().min(1)).max(8),
-  keywords: z
-    .array(
-      z.object({
-        keyword: z.string().min(1),
-        score: z.number().min(0).max(1),
-        reason: z.string().min(1),
-      }),
-    )
-    .min(3)
-    .max(10),
-  capitalFlowSignal: z.object({
-    direction: z.enum(["inflow", "outflow", "neutral"]),
-    participants: z
-      .array(z.enum(["foreign", "institutional", "retail"]))
-      .min(1)
-      .max(3),
-    rationale: z.string().min(1),
+  report: z.object({
+    headline: z.string().min(10).max(200),
+    analysis: z.string().min(100),
+    marketImpact: z.string().min(50),
+    watchList: z.string().min(30),
+    outlook: z.string().min(50),
   }),
-  confidence: z.number().min(0).max(1),
-  summary: z.string().min(1),
-  nextKeywords: z
-    .array(
-      z.object({
-        keyword: z.string().min(1),
-        reason: z.string().min(1),
-        confidence: z.number().min(0).max(1),
-        followMetrics: z.array(z.string().min(1)).min(1).max(4),
-      }),
-    )
-    .min(3)
-    .max(5),
+  metadata: z.object({
+    sentiment: z.enum(["bullish", "neutral", "bearish"]),
+    sectors: z.array(z.string().min(1)).max(5),
+    confidence: z.number().min(0).max(1),
+  }),
+  searchKeywords: z.array(searchKeywordSchema).min(2).max(5),
 });
 
 const dailySummarySchema = z.object({
   summaryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  marketRegime: z.enum(["risk_on", "neutral", "risk_off"]),
-  highlights: z.array(z.string().min(1)).min(3).max(5),
-  topSectors: z.array(z.string().min(1)).min(1).max(5),
-  topKeywords: z.array(z.string().min(1)).min(3).max(8),
-  nextKeywords: z
-    .array(
-      z.object({
-        keyword: z.string().min(1),
-        reason: z.string().min(1),
-        confidence: z.number().min(0).max(1),
-        followMetrics: z.array(z.string().min(1)).min(1).max(4),
-      }),
-    )
-    .min(3)
-    .max(5),
-  confidence: z.number().min(0).max(1),
-  summary: z.string().min(1),
+  report: z.object({
+    headline: z.string().min(10).max(200),
+    marketOverview: z.string().min(100),
+    keyDevelopments: z.string().min(100),
+    sectorAnalysis: z.string().min(100),
+    tomorrowWatch: z.string().min(50),
+    analystNote: z.string().min(50),
+  }),
+  metadata: z.object({
+    marketRegime: z.enum(["risk_on", "neutral", "risk_off"]),
+    topSectors: z.array(z.string().min(1)).max(5),
+    confidence: z.number().min(0).max(1),
+  }),
+  searchKeywords: z.array(searchKeywordSchema).min(3).max(8),
 });
 
 const getKstDateString = (date: Date): string =>
@@ -95,14 +77,38 @@ const analyzeArticle = async (article: {
   const { output } = await generateText({
     model: openai(config.aiModel),
     output: Output.object({ schema: analysisSchema }),
-    system:
-      "You are a Korean financial news analyst. Return only evidence-based structured JSON. This is not investment advice.",
+    system: [
+      "You are a professional Korean stock market analyst writing a research report.",
+      "CRITICAL: Base your analysis ONLY on the provided article content.",
+      "You may provide reasonable inferences and professional opinions based on the article.",
+      "DO NOT use external market data or information not mentioned in the article.",
+      "Clearly distinguish between facts from the article and your analytical inferences.",
+      "If the article doesn't provide enough information, state that clearly.",
+      "Write in Korean. This is not investment advice.",
+    ].join(" "),
     prompt: [
       `title: ${article.title}`,
       `published_at: ${article.publishedAt}`,
       "body:",
       article.body,
-      "\nExtract sentiment, sector trend, text-based capital flow signal, and next keyword ideas.",
+      "",
+      "=== INSTRUCTIONS ===",
+      "Extract and analyze ONLY what is written in the article above.",
+      "Do NOT add information from your training data or general knowledge.",
+      "",
+      "Write an analyst report with:",
+      "- report.headline: 1-2 sentence summary capturing the key message",
+      "- report.analysis: Detailed analysis of the article's content, implications, and your professional interpretation",
+      "- report.marketImpact: Market/sector impact based on the article content and reasonable inferences",
+      "- report.watchList: Sectors or stocks to monitor based on the article (if none mentioned, provide reasoned suggestions or state 'insufficient information')",
+      "- report.outlook: Forward-looking perspective based on article content and logical inferences",
+      "- metadata.sentiment: bullish/neutral/bearish based on article tone",
+      "- metadata.sectors: Sectors explicitly mentioned in the article (max 5)",
+      "- metadata.confidence: 0-1 (how clear and specific is the article)",
+      "- searchKeywords: 2-5 keywords for verifying or expanding on claims made in the article:",
+      "  * keyword: specific term or metric mentioned in the article",
+      "  * purpose: what aspect of the article this would verify or expand",
+      "  * dataSource: where to find this data (e.g., 'KRX 거래량', 'DART 공시', '한국은행 통계', 'Google Trends')",
     ].join("\n"),
   });
 
@@ -111,23 +117,44 @@ const analyzeArticle = async (article: {
 
 const summarizeDaily = async (summaryDate: string, analyses: NewsAnalysisResult[]): Promise<MarketDailySummary> => {
   const compactPayload = analyses.map((analysis) => ({
-    sentimentLabel: analysis.sentimentLabel,
-    sentimentScore: analysis.sentimentScore,
-    sectors: analysis.sectors,
-    keywords: analysis.keywords.map((item) => item.keyword),
-    capitalFlowDirection: analysis.capitalFlowSignal.direction,
-    nextKeywords: analysis.nextKeywords.map((item) => item.keyword),
+    headline: analysis.report.headline,
+    sentiment: analysis.metadata.sentiment,
+    sectors: analysis.metadata.sectors,
+    searchKeywords: analysis.searchKeywords.map((k) => k.keyword),
   }));
 
   const { output } = await generateText({
     model: openai(config.aiModel),
     output: Output.object({ schema: dailySummarySchema }),
-    system: "You aggregate Korean stock market news analysis into a concise daily market summary. Return JSON only.",
+    system: [
+      "You are a senior market strategist writing a daily market report in Korean.",
+      "CRITICAL: Base your summary on the provided news analyses.",
+      "You may provide strategic insights and professional opinions based on the analyses.",
+      "DO NOT add external market data not present in the analyses.",
+      "Synthesize the analyses and provide your professional interpretation.",
+      "Write professionally but accessibly.",
+    ].join(" "),
     prompt: [
       `summary_date: ${summaryDate}`,
-      "analysis_items:",
-      JSON.stringify(compactPayload),
-      "\nGenerate market regime, top sectors/keywords, and next keyword suggestions.",
+      `total_news_analyzed: ${analyses.length}`,
+      "individual_analyses:",
+      JSON.stringify(compactPayload, null, 2),
+      "",
+      "=== INSTRUCTIONS ===",
+      "Synthesize ONLY the information from the analyses above.",
+      "Do NOT add market commentary from your training data.",
+      "",
+      "Write a daily market report with:",
+      "- report.headline: One-line summary of the day's market themes",
+      "- report.marketOverview: Overall sentiment, themes, and your strategic interpretation",
+      "- report.keyDevelopments: Major news and their significance",
+      "- report.sectorAnalysis: Sector trends and your professional assessment",
+      "- report.tomorrowWatch: What to watch based on today's developments and logical implications",
+      "- report.analystNote: Your professional insights, patterns, and strategic perspective on the analyses",
+      "- metadata.marketRegime: risk_on/neutral/risk_off based on overall sentiment in analyses",
+      "- metadata.topSectors: Top 5 sectors mentioned across analyses",
+      "- metadata.confidence: 0-1 (how consistent and clear are the analyses)",
+      "- searchKeywords: 3-8 keywords for verifying themes found in the analyses with purpose and dataSource",
     ].join("\n"),
   });
 
@@ -198,13 +225,20 @@ export async function processDailySummary(targetDate = getKstDateString(new Date
   if (parsed.length === 0) {
     await saveMarketDailySummary(targetDate, {
       summaryDate: targetDate,
-      marketRegime: "neutral",
-      highlights: ["No analyzed news available for this date."],
-      topSectors: [],
-      topKeywords: [],
-      nextKeywords: [],
-      confidence: 0,
-      summary: "No analyzed news available.",
+      report: {
+        headline: "분석 가능한 뉴스 없음",
+        marketOverview: "해당 날짜에 분석된 뉴스가 없습니다.",
+        keyDevelopments: "데이터 없음",
+        sectorAnalysis: "데이터 없음",
+        tomorrowWatch: "다음 거래일 뉴스를 확인하세요.",
+        analystNote: "분석 데이터가 충분하지 않습니다.",
+      },
+      metadata: {
+        marketRegime: "neutral",
+        topSectors: [],
+        confidence: 0,
+      },
+      searchKeywords: [],
     });
 
     return { summaryDate: targetDate, analyzedCount: 0 };
