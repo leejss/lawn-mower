@@ -1,5 +1,5 @@
 import * as cron from "node-cron";
-import { runAnalysisAndSummary } from "../analysis/service";
+import { processDailySummary, processNewsAnalysis } from "../analysis/service";
 import { config } from "../config";
 import { scrapeAndUpload } from "../scrape/service";
 
@@ -38,10 +38,11 @@ export const createJobController = () => {
 
   const runAnalysisJob = async (source: AnalysisSource, startedAtMs: number): Promise<void> => {
     try {
-      const result = await runAnalysisAndSummary();
+      const analysis = await processNewsAnalysis();
+      const summary = await processDailySummary();
       const durationMs = Date.now() - startedAtMs;
       console.log(
-        `[${new Date().toISOString()}] Analysis completed (source=${source}, durationMs=${durationMs}, processed=${result.analysis.processed}, succeeded=${result.analysis.succeeded}, failed=${result.analysis.failed})`,
+        `[${new Date().toISOString()}] Analysis completed (source=${source}, durationMs=${durationMs}, processed=${analysis.processed}, succeeded=${analysis.succeeded}, failed=${analysis.failed}, summaryDate=${summary.summaryDate}, analyzedCount=${summary.analyzedCount})`,
       );
     } catch (error) {
       const durationMs = Date.now() - startedAtMs;
@@ -72,7 +73,7 @@ export const createJobController = () => {
 
     console.log(`[${scrapeStartedAtIso}] Scrape lock acquired (source=${source})`);
 
-    void runScrapeJob(source, startedAtMs);
+    runScrapeJob(source, startedAtMs);
 
     return { started: true };
   };
@@ -92,7 +93,7 @@ export const createJobController = () => {
 
     console.log(`[${analysisStartedAtIso}] Analysis lock acquired (source=${source})`);
 
-    void runAnalysisJob(source, startedAtMs);
+    runAnalysisJob(source, startedAtMs);
 
     return { started: true };
   };

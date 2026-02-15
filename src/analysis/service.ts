@@ -134,7 +134,7 @@ const summarizeDaily = async (summaryDate: string, analyses: NewsAnalysisResult[
   return output;
 };
 
-export async function runNewsAnalysisBatch(limit = config.analysisBatchSize): Promise<{
+export async function processNewsAnalysis(limit = config.analysisBatchSize): Promise<{
   picked: number;
   processed: number;
   succeeded: number;
@@ -181,7 +181,7 @@ export async function runNewsAnalysisBatch(limit = config.analysisBatchSize): Pr
   };
 }
 
-export async function buildAndSaveDailySummary(targetDate = getKstDateString(new Date())): Promise<{
+export async function processDailySummary(targetDate = getKstDateString(new Date())): Promise<{
   summaryDate: string;
   analyzedCount: number;
 }> {
@@ -214,16 +214,6 @@ export async function buildAndSaveDailySummary(targetDate = getKstDateString(new
   await saveMarketDailySummary(targetDate, summary);
 
   return { summaryDate: targetDate, analyzedCount: parsed.length };
-}
-
-export async function runAnalysisAndSummary(limit = config.analysisBatchSize): Promise<{
-  analysis: { picked: number; processed: number; succeeded: number; failed: number };
-  summary: { summaryDate: string; analyzedCount: number };
-}> {
-  const analysis = await runNewsAnalysisBatch(limit);
-  const summary = await buildAndSaveDailySummary();
-
-  return { analysis, summary };
 }
 
 export async function getAnalysisStatus(): Promise<{
