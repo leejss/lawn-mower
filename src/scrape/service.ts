@@ -1,12 +1,11 @@
 import { config } from "../config";
-import { saveArticlesToSupabase } from "../database/supabase";
-import { collectMainnewsArticleUrls } from "../scraper/mainnewsCollector";
-import { scrapeNaverNewsBatch } from "../scraper/naverNewsScraper";
+import { saveArticlesToSupabase } from "../db/supabase";
+import { collectMainnewsArticleUrls } from "./collector";
+import { scrapeNaverNewsBatch } from "./scraper";
 
 export async function scrapeAndUpload(): Promise<void> {
   console.log("Starting scraping process...");
 
-  // Collect article URLs from mainnews
   const urls = await collectMainnewsArticleUrls(1, config.mainnewsLimit);
 
   if (urls.length === 0) {
@@ -16,7 +15,6 @@ export async function scrapeAndUpload(): Promise<void> {
 
   console.log(`Found ${urls.length} URLs to scrape`);
 
-  // Scrape articles
   const { articles, failures } = await scrapeNaverNewsBatch(urls, config.concurrency);
 
   console.log(`Scraped ${articles.length} articles successfully`);
@@ -30,7 +28,6 @@ export async function scrapeAndUpload(): Promise<void> {
     return;
   }
 
-  // Upload to Supabase
   await saveArticlesToSupabase(articles);
 
   console.log(`Successfully uploaded ${articles.length} articles to Supabase`);

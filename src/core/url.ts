@@ -40,7 +40,7 @@ export const parseArgs = (argv: string[]): RunOptions => {
   const url = getArgValue(argv, "--url");
   if (!url || url.trim().length === 0) {
     throw new Error(
-      "`--url` 은 필수입니다. 예: bun run start -- --url https://n.news.naver.com/mnews/article/015/0005249661",
+      "`--url` 은 필수입니다. 예: bun run cli -- --url https://n.news.naver.com/mnews/article/015/0005249661",
     );
   }
 

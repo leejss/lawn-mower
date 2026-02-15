@@ -11,7 +11,7 @@ import {
   saveNewsAnalysis,
   tryMarkRawNewsAsProcessing,
   updateRawNewsStatus,
-} from "../database/supabase";
+} from "../db/supabase";
 
 const KST_TIME_ZONE = "Asia/Seoul";
 

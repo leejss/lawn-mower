@@ -19,26 +19,34 @@ Supabase PostgreSQL
 ## 📁 프로젝트 구조
 
 ```
+cli.ts                         # CLI 엔트리
+server.ts                      # 서버 엔트리 (Cron + API)
 src/
-  config/constants.ts          # 설정 상수
-  core/                         # 핵심 타입 정의
+  config.ts                    # 런타임 설정
+  core/                        # 핵심 타입/유틸
     article.ts
+    failure.ts
     newsId.ts
     rawNewsRecord.ts
+    runOptions.ts
     text.ts
     url.ts
-  database/
-    supabase.ts                 # Supabase 클라이언트
-  scraper/
-    mainnewsCollector.ts        # 뉴스 URL 수집
-    naverNewsScraper.ts         # Playwright 스크래핑
-  services/
-    scrapeService.ts            # 스크래핑 + 업로드 로직
-  io/output.ts                  # 파일 출력
-  index.ts                      # CLI 진입점
-server.ts                       # Railway 서버 (Cron + API)
+  analysis/
+    service.ts                 # AI 분석 + 일간 요약
+  api/
+    handlers.ts                # HTTP 핸들러
+  db/
+    supabase.ts                # Supabase 접근
+  io/
+    output.ts                  # 파일 출력
+  scheduler/
+    jobs.ts                    # cron + job lock
+  scrape/
+    collector.ts               # 뉴스 URL 수집
+    scraper.ts                 # Playwright 스크래핑
+    service.ts                 # 스크래핑 + 업로드 로직
 supabase/
-  schema.sql                    # DB 스키마
+  schema.sql                   # DB 스키마
 ```
 
 ## 🚀 로컬 개발
@@ -77,7 +85,7 @@ bun run scrape:single
 ```bash
 bun run scrape:mainnews
 # 또는 옵션 지정:
-bun run start -- --mainnews --page 1 --limit 10 --concurrency 3
+bun run cli -- --mainnews --page 1 --limit 10 --concurrency 3
 ```
 
 **서버 실행 (Cron + API):**

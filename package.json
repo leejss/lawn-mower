@@ -5,11 +5,12 @@
   "scripts": {
     "dev": "bun run server.ts",
     "start": "bun run server.ts",
+    "cli": "bun run cli.ts",
     "lint": "biome lint .",
     "check": "biome check .",
     "format": "biome format --write .",
-    "scrape:single": "bun run src/index.ts --url https://n.news.naver.com/mnews/article/015/0005249661",
-    "scrape:mainnews": "bun run src/index.ts --mainnews --page 1 --limit 10 --concurrency 3"
+    "scrape:single": "bun run cli.ts --url https://n.news.naver.com/mnews/article/015/0005249661",
+    "scrape:mainnews": "bun run cli.ts --mainnews --page 1 --limit 10 --concurrency 3"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.29",

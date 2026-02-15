@@ -54,7 +54,6 @@ export async function saveArticlesToSupabase(
 
   const records = articles.map((article) => toRawNewsRecord(article, source, nowIso));
 
-  // Insert only semantics: when news_id already exists, keep existing row unchanged.
   const { error } = await supabase.from("raw_news").upsert(records, {
     onConflict: "news_id",
     ignoreDuplicates: true,
@@ -134,7 +133,6 @@ export async function fetchNewsAnalysesByDate(summaryDate: string): Promise<Anal
     throw new Error(`Invalid summaryDate format: ${summaryDate}`);
   }
 
-  // summaryDate는 KST 기준 YYYY-MM-DD이므로, 조회 경계는 KST 하루를 UTC로 변환해 사용한다.
   const kstOffsetHours = 9;
   const startUtcMs = Date.UTC(year, month - 1, day, 0, 0, 0, 0) - kstOffsetHours * 60 * 60 * 1000;
   const endExclusiveUtcMs = Date.UTC(year, month - 1, day + 1, 0, 0, 0, 0) - kstOffsetHours * 60 * 60 * 1000;
