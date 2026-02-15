@@ -28,8 +28,7 @@ const configSchema = z.object({
   supabaseUrl: z.string().min(1).optional(),
   supabaseKey: z.string().min(1).optional(),
   openaiKey: z.string().min(1).optional(),
-  scrapeToken: z.string().min(1).optional(),
-  analysisToken: z.string().min(1).optional(),
+  triggerToken: z.string().min(1).optional(),
 });
 
 type Config = z.infer<typeof configSchema>;
@@ -66,8 +65,7 @@ const createConfig = (): Config => {
     supabaseUrl: process.env.SUPABASE_URL,
     supabaseKey: process.env.SUPABASE_SERVICE_KEY,
     openaiKey: process.env.OPENAI_API_KEY,
-    scrapeToken: process.env.SCRAPE_TRIGGER_TOKEN,
-    analysisToken: process.env.ANALYSIS_TRIGGER_TOKEN,
+    triggerToken: process.env.TRIGGER_TOKEN,
   };
 
   const result = configSchema.safeParse(raw);

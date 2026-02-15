@@ -19,8 +19,7 @@ export const createApiHandler =
   (jobController: JobController) =>
   (req: Request): Promise<Response> | Response => {
     const url = new URL(req.url);
-    const scrapeTriggerToken = config.scrapeToken;
-    const analysisTriggerToken = config.analysisToken;
+    const triggerToken = config.triggerToken;
 
     if (url.pathname === "/health") {
       return new Response("OK", { status: 200 });
@@ -34,8 +33,8 @@ export const createApiHandler =
         });
       }
 
-      if (!scrapeTriggerToken) {
-        console.error("SCRAPE_TRIGGER_TOKEN is not configured");
+      if (!triggerToken) {
+        console.error("TRIGGER_TOKEN is not configured");
         return new Response("Trigger token is not configured", { status: 503 });
       }
 
@@ -47,7 +46,7 @@ export const createApiHandler =
         });
       }
 
-      if (providedToken !== scrapeTriggerToken) {
+      if (providedToken !== triggerToken) {
         return new Response("Forbidden", { status: 403 });
       }
 
@@ -68,9 +67,9 @@ export const createApiHandler =
         });
       }
 
-      if (!analysisTriggerToken) {
-        console.error("ANALYSIS_TRIGGER_TOKEN is not configured");
-        return new Response("Analysis trigger token is not configured", { status: 503 });
+      if (!triggerToken) {
+        console.error("TRIGGER_TOKEN is not configured");
+        return new Response("Trigger token is not configured", { status: 503 });
       }
 
       const providedToken = getBearerToken(req.headers.get("authorization"));
@@ -81,7 +80,7 @@ export const createApiHandler =
         });
       }
 
-      if (providedToken !== analysisTriggerToken) {
+      if (providedToken !== triggerToken) {
         return new Response("Forbidden", { status: 403 });
       }
 

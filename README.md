@@ -69,8 +69,7 @@ cp .env.example .env
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_KEY=your-service-role-key
 PLAYWRIGHT_HEADLESS=true
-SCRAPE_TRIGGER_TOKEN=replace-with-long-random-token
-ANALYSIS_TRIGGER_TOKEN=replace-with-long-random-token
+TRIGGER_TOKEN=replace-with-long-random-token
 OPENAI_API_KEY=your-openai-api-key
 ```
 
@@ -101,10 +100,10 @@ bun run dev
 
 ```bash
 curl -X POST http://localhost:3000/trigger-scrape \
-  -H "Authorization: Bearer $SCRAPE_TRIGGER_TOKEN"
+  -H "Authorization: Bearer $TRIGGER_TOKEN"
 
 curl -X POST http://localhost:3000/trigger-analysis \
-  -H "Authorization: Bearer $ANALYSIS_TRIGGER_TOKEN"
+  -H "Authorization: Bearer $TRIGGER_TOKEN"
 ```
 
 ## 📤 배포
@@ -119,8 +118,7 @@ curl -X POST http://localhost:3000/trigger-analysis \
    - `SUPABASE_URL`
    - `SUPABASE_SERVICE_KEY`
    - `PLAYWRIGHT_HEADLESS=true`
-   - `SCRAPE_TRIGGER_TOKEN` (긴 랜덤 토큰)
-   - `ANALYSIS_TRIGGER_TOKEN` (긴 랜덤 토큰)
+   - `TRIGGER_TOKEN` (긴 랜덤 토큰)
    - `OPENAI_API_KEY`
 4. 자동 배포 완료!
 

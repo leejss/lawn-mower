@@ -41,7 +41,7 @@
    SUPABASE_URL=https://your-project.supabase.co
    SUPABASE_SERVICE_KEY=your-service-role-key-here
    PLAYWRIGHT_HEADLESS=true
-   SCRAPE_TRIGGER_TOKEN=your-long-random-token
+   TRIGGER_TOKEN=your-long-random-token
    ```
 
 3. **자동 배포 시작**
@@ -59,7 +59,7 @@
 2. **수동 스크래핑 트리거**
    ```bash
    curl -X POST https://your-app.railway.app/trigger-scrape \
-     -H "Authorization: Bearer $SCRAPE_TRIGGER_TOKEN"
+     -H "Authorization: Bearer $TRIGGER_TOKEN"
    # 응답: Scraping job triggered
    ```
 
@@ -90,7 +90,7 @@ cron.schedule("0 */6 * * *", ... // 6시간마다
 ```bash
 # 환경 변수 설정
 cp .env.example .env
-# .env 파일에 Supabase 정보와 SCRAPE_TRIGGER_TOKEN 입력
+# .env 파일에 Supabase 정보와 TRIGGER_TOKEN 입력
 
 # Playwright 브라우저 설치
 bunx playwright install chromium
@@ -101,7 +101,7 @@ bun run dev
 # 다른 터미널에서 테스트
 curl http://localhost:3000/health
 curl -X POST http://localhost:3000/trigger-scrape \
-  -H "Authorization: Bearer $SCRAPE_TRIGGER_TOKEN"
+  -H "Authorization: Bearer $TRIGGER_TOKEN"
 ```
 
 ## 🐛 트러블슈팅
