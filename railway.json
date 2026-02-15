@@ -1,8 +1,5 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
-  "build": {
-    "buildCommand": "bun install && bunx playwright install --with-deps chromium"
-  },
   "deploy": {
     "startCommand": "bun run src/server.ts",
     "healthcheckPath": "/health",
