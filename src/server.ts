@@ -1,6 +1,6 @@
-import { createApiHandler } from "./src/api/handlers";
-import { config } from "./src/config";
-import { createJobController, registerSchedules } from "./src/scheduler/jobs";
+import { createApiHandler } from "./api/handlers";
+import { config } from "./config";
+import { createJobController, registerSchedules } from "./scheduler/jobs";
 
 const jobController = createJobController();
 

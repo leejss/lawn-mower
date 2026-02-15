@@ -1,7 +1,7 @@
-import { parseArgs, validateNaverNewsUrl } from "./src/core/url";
-import { formatArticleText, writeBatchOutputs, writeOutputs } from "./src/io/output";
-import { collectMainnewsArticleUrls } from "./src/scrape/collector";
-import { scrapeNaverNews, scrapeNaverNewsBatch } from "./src/scrape/scraper";
+import { parseArgs, validateNaverNewsUrl } from "./core/url";
+import { formatArticleText, writeBatchOutputs, writeOutputs } from "./io/output";
+import { collectMainnewsArticleUrls } from "./scrape/collector";
+import { scrapeNaverNews, scrapeNaverNewsBatch } from "./scrape/scraper";
 
 const runSingleMode = async (url: string): Promise<void> => {
   const targetUrl = validateNaverNewsUrl(url);
