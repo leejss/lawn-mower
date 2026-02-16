@@ -47,7 +47,7 @@ const createConfig = (): Config => {
 		pageTimeoutMs: 30000,
 		waitTimeoutMs: 15000,
 		mainnewsUrl: "https://finance.naver.com/news/mainnews.naver",
-		mainnewsLimit: isDev ? 3 : 10,
+		mainnewsLimit: 20,
 		concurrency: 3,
 
 		// AI 분석
